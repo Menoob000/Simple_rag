@@ -160,38 +160,91 @@ def extract_rks_structure(
     jenis_pekerjaan: str,
     detail_pekerjaan: str,
     lokasi: str = "",
-    context_summary: str = ""
+    context_summary: str = "",
+    resiko_csms: str = "MEDIUM",
+    nomor_dokumen: str = "RKS-[KODE]-[TAHUN]",
+    nama_perusahaan: str = "PT PERTAMINA"
 ) -> dict:
     """
-    Use LLM to analyze knowledge base chunks and extract a dynamic RKS structure.
-    Uses max_tokens=2000 to keep the structure skeleton fast (~15-20 seconds).
-    
-    Args:
-        chunks: Retrieved document chunks from knowledge base
-        llm: LangChain LLM instance
-        jenis_pekerjaan: Type of work (e.g., "overhaul tangki")
-        detail_pekerjaan: Detailed description of the work
-        lokasi: Work location
-    
-    Returns:
-        dict: RKS structure in intermediate format (without filled content)
+    Returns a fixed structure instead of using LLM to extract structure.
     """
-    prompt = EXTRACT_STRUCTURE_PROMPT.format(
-        jenis_pekerjaan=jenis_pekerjaan,
-        detail_pekerjaan=detail_pekerjaan,
-        lokasi=lokasi,
-        chunks=chunks,
-        context_summary=context_summary if context_summary else "(Tidak ada konteks tambahan)"
-    )
-    
-    # Use max_tokens to limit structure-only output (skeleton, not full content)
-    response = llm.invoke(
-        [HumanMessage(content=prompt)],
-        max_tokens=2000,
-    )
-    structure = _parse_json_response(response.content)
-    
-    return structure
+    return {
+      "cover_page": {
+        "judul_pekerjaan": jenis_pekerjaan.upper(),
+        "bidder_list_no": "",
+        "resiko_csms": resiko_csms,
+        "nama_perusahaan": nama_perusahaan
+      },
+      "pengesahan": {
+        "disusun_oleh": {"nama": "", "jabatan": ""},
+        "diperiksa_oleh": {"nama": "", "jabatan": ""},
+        "disetujui_oleh": {"nama": "", "jabatan": ""}
+      },
+      "metadata": {
+        "nomor_dokumen": nomor_dokumen,
+        "jenis_pekerjaan": jenis_pekerjaan,
+        "lokasi": lokasi
+      },
+      "bab": [
+        {
+          "nomor": "LAMPIRAN I",
+          "judul": "PENJELASAN PROYEK",
+          "sub_bab": [
+            {"nomor": "I.1", "judul": "Penjelasan Umum", "tipe": "paragraf", "konten_instruksi": "Jelaskan proyek secara umum"},
+            {"nomor": "I.2", "judul": "Tujuan", "tipe": "paragraf", "konten_instruksi": "Jelaskan tujuan proyek"},
+            {"nomor": "I.3", "judul": "Judul Pekerjaan", "tipe": "paragraf", "konten_instruksi": "Sebutkan judul pekerjaan"},
+            {"nomor": "I.4", "judul": "Lokasi Pekerjaan", "tipe": "paragraf", "konten_instruksi": "Sebutkan lokasi pekerjaan"},
+            {"nomor": "I.5", "judul": "Referensi", "tipe": "numbered_list", "konten_instruksi": "Sebutkan dokumen referensi terkait"},
+            {"nomor": "I.6", "judul": "Definisi", "tipe": "paragraf", "konten_instruksi": "Sebutkan definisi istilah yang digunakan"},
+            {"nomor": "I.7", "judul": "Ruang Lingkup Pekerjaan", "tipe": "paragraf", "konten_instruksi": "Sebutkan ruang lingkup secara umum"}
+          ]
+        },
+        {
+          "nomor": "LAMPIRAN II",
+          "judul": "LINGKUP PEKERJAAN",
+          "sub_bab": [
+            {"nomor": "II.1", "judul": "Pekerjaan Persiapan", "tipe": "paragraf", "konten_instruksi": "Jelaskan pekerjaan persiapan"},
+            {"nomor": "II.2", "judul": "Pekerjaan Engineering", "tipe": "paragraf", "konten_instruksi": "Jelaskan pekerjaan engineering"},
+            {"nomor": "II.3", "judul": "Pekerjaan Construction", "tipe": "paragraf", "konten_instruksi": "Jelaskan pekerjaan construction"},
+            {"nomor": "II.4", "judul": "Inspeksi, Testing, dan QA/QC", "tipe": "paragraf", "konten_instruksi": "Jelaskan inspeksi, testing, dan QA/QC"},
+            {"nomor": "II.5", "judul": "Pre-commissioning dan Commissioning", "tipe": "paragraf", "konten_instruksi": "Jelaskan pre-commissioning dan commissioning"},
+            {"nomor": "II.6", "judul": "Spesifikasi Teknis", "tipe": "paragraf", "konten_instruksi": "Jelaskan spesifikasi teknis"},
+            {"nomor": "II.7", "judul": "Training", "tipe": "paragraf", "konten_instruksi": "Jelaskan pelatihan yang dibutuhkan"},
+            {"nomor": "II.8", "judul": "Sertifikasi", "tipe": "paragraf", "konten_instruksi": "Jelaskan sertifikasi yang diperlukan"},
+            {"nomor": "II.9", "judul": "Warranty", "tipe": "paragraf", "konten_instruksi": "Jelaskan garansi pekerjaan"},
+            {"nomor": "II.10", "judul": "Administrasi Pelaksanaan Pekerjaan", "tipe": "paragraf", "konten_instruksi": "Jelaskan administrasi pelaksanaan"}
+          ]
+        },
+        {
+          "nomor": "3",
+          "judul": "KUALIFIKASI TENAGA KERJA DAN PERALATAN",
+          "sub_bab": [
+            {"nomor": "3.1", "judul": "Tenaga Kerja (Personel Inti) dan Kompetensi Keahlian", "tipe": "table", "konten_instruksi": "Buat tabel personil dan kualifikasi"},
+            {"nomor": "3.2", "judul": "Persyaratan Administrasi Personil", "tipe": "numbered_list", "konten_instruksi": "Sebutkan persyaratan administrasi"},
+            {"nomor": "3.3", "judul": "Prosedur Penggantian Tenaga Kerja", "tipe": "paragraf", "konten_instruksi": "Jelaskan prosedur penggantian pekerja"}
+          ]
+        },
+        {
+          "nomor": "4",
+          "judul": "JANGKA WAKTU PELAKSANAAN",
+          "sub_bab": [
+            {"nomor": "4.1", "judul": "Jangka Waktu Pelaksanaan", "tipe": "paragraf", "konten_instruksi": "Jelaskan berapa lama pelaksanaan"},
+            {"nomor": "4.2", "judul": "Sanksi dan Denda", "tipe": "paragraf", "konten_instruksi": "Jelaskan sanksi keterlambatan"}
+          ]
+        },
+        {
+          "nomor": "5",
+          "judul": "TERMS & CONDITIONS",
+          "sub_bab": [
+            {"nomor": "5.1", "judul": "Tanggung Jawab Kontraktor", "tipe": "numbered_list", "konten_instruksi": "Jelaskan tanggung jawab kontraktor"},
+            {"nomor": "5.2", "judul": "Persyaratan Kontraktor", "tipe": "numbered_list", "konten_instruksi": "Jelaskan persyaratan kontraktor"},
+            {"nomor": "5.3", "judul": "Ketentuan Harga Penawaran dan Pembayaran", "tipe": "paragraf", "konten_instruksi": "Jelaskan terms of payment"},
+            {"nomor": "5.4", "judul": "Kriteria dan Tata Cara Evaluasi", "tipe": "paragraf", "konten_instruksi": "Jelaskan cara evaluasi penawaran"},
+            {"nomor": "5.5", "judul": "Ketentuan Lain", "tipe": "paragraf", "konten_instruksi": "Jelaskan ketentuan lainnya"}
+          ]
+        }
+      ]
+    }
 
 
 def fill_rks_content(

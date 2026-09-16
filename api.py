@@ -14,6 +14,9 @@ async def generate_rks(
     jenis_pekerjaan: str = Form(...),
     detail_pekerjaan: str = Form(...),
     lokasi: str = Form(""),
+    resiko_csms: str = Form("MEDIUM"),
+    nomor_dokumen: str = Form("RKS-[KODE]-[TAHUN]"),
+    nama_perusahaan: str = Form("PT PERTAMINA"),
     file: UploadFile = File(..., description="Upload BOQ/Context PDF file here")
 ):
     try:
@@ -39,7 +42,10 @@ async def generate_rks(
             "jenis_pekerjaan": jenis_pekerjaan,
             "detail_pekerjaan": detail_pekerjaan,
             "lokasi": lokasi,
-            "context_summary": context_summary
+            "context_summary": context_summary,
+            "resiko_csms": resiko_csms,
+            "nomor_dokumen": nomor_dokumen,
+            "nama_perusahaan": nama_perusahaan
         })
 
         if "Error" in gen_result or "Tidak ditemukan" in gen_result:

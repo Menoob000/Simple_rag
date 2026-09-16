@@ -1,8 +1,18 @@
 import io
-from pypdf import PdfReader
+import os
+import tempfile
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 import config
+
+_doc_converter = None
+
+def get_converter():
+    global _doc_converter
+    if _doc_converter is None:
+        from docling.document_converter import DocumentConverter
+        _doc_converter = DocumentConverter()
+    return _doc_converter
 
 def get_summarizer_llm():
     return ChatOpenAI(
@@ -16,15 +26,29 @@ def get_summarizer_llm():
     )
 
 def extract_text_from_pdfs(pdf_bytes_list: list[bytes]) -> str:
-    """Extract text from a list of PDF byte arrays."""
+    """Extract text from a list of PDF byte arrays using Docling."""
+    converter = get_converter()
     combined_text = []
+    
     for pdf_bytes in pdf_bytes_list:
-        reader = PdfReader(io.BytesIO(pdf_bytes))
-        for page in reader.pages:
-            text = page.extract_text()
-            if text:
-                combined_text.append(text)
-    return "\n".join(combined_text)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            tmp_file.write(pdf_bytes)
+            tmp_file_path = tmp_file.name
+            
+        try:
+            print("  [Docling] Mulai memproses PDF dan tabel...")
+            result = converter.convert(tmp_file_path)
+            markdown_text = result.document.export_to_markdown()
+            if markdown_text:
+                combined_text.append(markdown_text)
+            print("  [Docling] Selesai memproses halaman.")
+        except Exception as e:
+            print(f"  [Docling] Error saat membaca PDF: {e}")
+        finally:
+            if os.path.exists(tmp_file_path):
+                os.remove(tmp_file_path)
+                
+    return "\n\n---\n\n".join(combined_text)
 
 def summarize_context(text: str) -> str:
     """Use the LLM to summarize BOQ and other project specific details from the raw text."""

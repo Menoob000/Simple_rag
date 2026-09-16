@@ -68,7 +68,10 @@ def generate_rks_document(
     jenis_pekerjaan: str,
     detail_pekerjaan: str,
     lokasi: str = "",
-    context_summary: str = ""
+    context_summary: str = "",
+    resiko_csms: str = "MEDIUM",
+    nomor_dokumen: str = "RKS-[KODE]-[TAHUN]",
+    nama_perusahaan: str = "PT PERTAMINA"
 ) -> str:
     """Generate draft RKS (Rencana Kerja dan Syarat-Syarat) secara utuh berdasarkan knowledge base.
     Struktur dan konten diekstrak secara dinamis dari dokumen RKS sejenis.
@@ -100,7 +103,10 @@ def generate_rks_document(
             jenis_pekerjaan=jenis_pekerjaan,
             detail_pekerjaan=detail_pekerjaan,
             lokasi=lokasi,
-            context_summary=context_summary
+            context_summary=context_summary,
+            resiko_csms=resiko_csms,
+            nomor_dokumen=nomor_dokumen,
+            nama_perusahaan=nama_perusahaan
         )
 
         num_bab = len(structure.get("bab", []))
